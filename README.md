@@ -76,12 +76,4 @@ Made with ❤️ by **LucillaCatLana** for Binance OpenClaw AI Competition 2026.
 ## 📄 License
 
 MIT — free to use, modify and share.
-```
 
----
-
-## Як змінити README на GitHub
-
-**Крок 1** — Зайди в репозиторій
-```
-https://github.com/LucillaCatLana/cryptosage-openclaw
