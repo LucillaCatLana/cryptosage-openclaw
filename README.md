@@ -69,7 +69,7 @@ open cryptosage-binance.html
 
 ## 👤 Author
 
-Made with ❤️ by **LucillaCatLana** for Binance OpenClaw AI Competition 2026.
+Made with ❤️ by **Lucilla Cat Lana** for Binance OpenClaw AI Competition 2026.
 
 ---
 
