@@ -4,7 +4,7 @@
 
 CryptoSage is an AI-powered crypto education assistant built on top of the Binance ecosystem. It helps beginners and intermediate users learn crypto, understand the market, and make smarter decisions — all in one place.
 
-🌐 Live Demo: [Try it here](https://lucillacatlana.github.io/cryptosage-openclaw/cryptosage-binance.html)
+🌐 Live Demo: [Try it here](https://lucillacatlana.github.io/cryptosage-openclaw/cryptosage-binance.html?v=2)
 
 ---
 
