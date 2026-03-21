@@ -1303,7 +1303,7 @@ async function sendMessage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer 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'
+        'Authorization': 'Bearer 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'
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
@@ -2230,7 +2230,7 @@ async function runOracle() {
 
     const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer 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' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer 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' },
       body: JSON.stringify({ model: 'llama-3.3-70b-versatile', max_tokens: 120,
         messages: [{ role: 'user', content: verdictPrompt }] })
     });
