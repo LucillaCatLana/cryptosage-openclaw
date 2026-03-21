@@ -150,7 +150,9 @@
 
   /* SIDEBAR */
   .sidebar {
-    width: 260px;
+    width: 230px;
+    min-width: 230px;
+    max-width: 230px;
     background: var(--surface);
     border-right: 1px solid var(--border);
     display: flex;
@@ -249,9 +251,135 @@
   .lesson-title { font-size: 12px; font-weight: 600; line-height: 1.3; }
   .lesson-meta { font-size: 11px; color: var(--text-dim); }
 
+  /* ── CHAT HISTORY PANEL ── */
+  .chat-panel {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .chat-panel-header {
+    padding: 12px 12px 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .chat-panel-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .chat-panel-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .toggle-panel-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 7px;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .toggle-panel-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .chat-panel.collapsed {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+  }
+  .chat-panel.collapsed .chat-list,
+  .chat-panel.collapsed .chat-panel-footer,
+  .chat-panel.collapsed .new-chat-btn,
+  .chat-panel.collapsed .chat-panel-label {
+    display: none;
+  }
+  .chat-panel.collapsed .chat-panel-header {
+    padding: 10px 4px;
+    align-items: center;
+  }
+  .chat-panel.collapsed .chat-panel-top {
+    justify-content: center;
+    margin: 0;
+  }
+  .new-chat-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: opacity 0.15s;
+  }
+  .new-chat-btn:hover { opacity: 0.85; }
+  .chat-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .chat-list-item {
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .chat-list-item:hover { background: var(--surface2); border-color: var(--border); }
+  .chat-list-item.active { background: var(--surface2); border-color: var(--gold); }
+  .chat-item-icon { font-size: 14px; flex-shrink: 0; }
+  .chat-item-info { flex: 1; overflow: hidden; }
+  .chat-item-title { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-item-date { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+  .chat-item-del {
+    opacity: 0; font-size: 14px; color: var(--text-dim);
+    background: none; border: none; cursor: pointer;
+    padding: 2px 4px; border-radius: 4px; flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .chat-list-item:hover .chat-item-del { opacity: 1; }
+  .chat-item-del:hover { color: var(--red); }
+  .chat-panel-footer {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+
   /* CHAT AREA */
   .chat-area {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -643,6 +771,18 @@
 </div>
 
 <div class="main">
+
+  <div class="chat-panel" id="chat-panel">
+    <div class="chat-panel-header">
+      <div class="chat-panel-top">
+        <span class="chat-panel-label">Чати</span>
+        <button class="toggle-panel-btn" onclick="togglePanel()" id="toggle-btn">‹</button>
+      </div>
+      <button class="new-chat-btn" onclick="newChat()">✏️ Новий чат</button>
+    </div>
+    <div class="chat-list" id="chat-list"></div>
+    <div class="chat-panel-footer" id="chat-panel-footer">Чати зберігаються локально</div>
+  </div>
 
   <div class="sidebar">
     <!-- Multi Coin Chart -->
@@ -1121,6 +1261,175 @@ let isLoading = false;
 let currentTopic = 'general';
 let quizActive = null;
 
+// ── Multi-Chat System ──
+let currentChatId = null;
+
+function getChatList() {
+  return JSON.parse(localStorage.getItem('cs_chats_index') || '[]');
+}
+
+function saveChatList(list) {
+  try { localStorage.setItem('cs_chats_index', JSON.stringify(list)); } catch(e) {}
+}
+
+function getChat(id) {
+  return JSON.parse(localStorage.getItem('cs_chat_' + id) || 'null');
+}
+
+function saveCurrentChat() {
+  if (!currentChatId) return;
+  const msgs = document.getElementById('messages');
+  const bubbles = msgs.querySelectorAll('.msg');
+  const messages = [];
+  bubbles.forEach(b => {
+    const role = b.classList.contains('user') ? 'user' : 'assistant';
+    const textEl = b.querySelector('.msg-bubble div:last-child') || b.querySelector('.msg-bubble');
+    if (textEl) messages.push({ role, html: textEl.innerHTML });
+  });
+  const list = getChatList();
+  const idx = list.findIndex(c => c.id === currentChatId);
+  if (idx >= 0) {
+    list[idx].updated = Date.now();
+    if (messages.length > 0 && list[idx].title === 'Новий чат') {
+      const firstUserMsg = messages.find(m => m.role === 'user');
+      if (firstUserMsg) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = firstUserMsg.html;
+        list[idx].title = (tmp.textContent || '').slice(0, 30) || (currentLang === 'en' ? 'New Chat' : 'Новий чат');
+      }
+    }
+    saveChatList(list);
+  }
+  try {
+    localStorage.setItem('cs_chat_' + currentChatId, JSON.stringify({
+      id: currentChatId,
+      messages,
+      history: conversationHistory
+    }));
+  } catch(e) {}
+  renderChatList();
+}
+
+function saveChatMessage(role, content) {
+  saveCurrentChat();
+}
+
+function newChat() {
+  const id = 'chat_' + Date.now();
+  const list = getChatList();
+  list.unshift({ id, title: currentLang === 'en' ? 'New Chat' : 'Новий чат', created: Date.now(), updated: Date.now() });
+  saveChatList(list);
+  loadChat(id);
+  renderChatList();
+}
+
+function loadChat(id) {
+  currentChatId = id;
+  conversationHistory = [];
+  const msgs = document.getElementById('messages');
+  const t = translations[currentLang];
+  msgs.innerHTML = `<div class="welcome-block">
+    <div class="welcome-emoji">🦞</div>
+    <h2 id="welcome-title">${t.welcome_title}</h2>
+    <p id="welcome-sub">${t.welcome_text}</p>
+    <div class="quick-actions">
+      ${t.qa_btns.map((btn,i) => `<button class="qa-btn" onclick="sendQuickMsg('${t.qa_msgs[i]}')">${btn}</button>`).join('')}
+    </div>
+  </div>`;
+
+  const saved = getChat(id);
+  if (saved && saved.messages && saved.messages.length > 0) {
+    const welcome = msgs.querySelector('.welcome-block');
+    if (welcome) welcome.remove();
+    saved.messages.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'msg ' + m.role;
+      const avatar = document.createElement('div');
+      avatar.className = 'msg-avatar ' + (m.role === 'user' ? 'user' : 'ai');
+      avatar.textContent = m.role === 'user' ? '👤' : '🦞';
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      if (m.role === 'assistant') {
+        const sender = document.createElement('div');
+        sender.className = 'sender';
+        sender.textContent = 'CryptoSage AI';
+        bubble.appendChild(sender);
+      }
+      const textDiv = document.createElement('div');
+      textDiv.innerHTML = m.html;
+      bubble.appendChild(textDiv);
+      div.appendChild(avatar);
+      div.appendChild(bubble);
+      msgs.appendChild(div);
+    });
+    conversationHistory = saved.history || [];
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+  renderChatList();
+}
+
+function deleteChat(id, e) {
+  e.stopPropagation();
+  const list = getChatList().filter(c => c.id !== id);
+  saveChatList(list);
+  localStorage.removeItem('cs_chat_' + id);
+  if (currentChatId === id) {
+    if (list.length > 0) loadChat(list[0].id);
+    else newChat();
+  }
+  renderChatList();
+}
+
+function togglePanel() {
+  const panel = document.getElementById('chat-panel');
+  const btn = document.getElementById('toggle-btn');
+  panel.classList.toggle('collapsed');
+  btn.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
+  try { localStorage.setItem('cs_panel_collapsed', panel.classList.contains('collapsed')); } catch(e) {}
+}
+
+function renderChatList() {
+  const list = getChatList();
+  const container = document.getElementById('chat-list');
+  if (!container) return;
+  container.innerHTML = '';
+  if (list.length === 0) {
+    container.innerHTML = '<div style="padding:12px;text-align:center;font-size:11px;color:var(--text-dim)">Немає чатів</div>';
+    return;
+  }
+  list.forEach(chat => {
+    const div = document.createElement('div');
+    div.className = 'chat-list-item' + (chat.id === currentChatId ? ' active' : '');
+    div.onclick = () => loadChat(chat.id);
+    const date = new Date(chat.updated);
+    const dateStr = date.toLocaleDateString('uk-UA', { day:'numeric', month:'short' });
+    div.innerHTML = `
+      <div class="chat-item-icon">💬</div>
+      <div class="chat-item-info">
+        <div class="chat-item-title">${chat.title}</div>
+        <div class="chat-item-date">${dateStr}</div>
+      </div>
+      <button class="chat-item-del" onclick="deleteChat('${chat.id}', event)" title="Видалити">✕</button>`;
+    container.appendChild(div);
+  });
+}
+
+function loadSavedChat() {
+  // Restore panel collapsed state
+  if (localStorage.getItem('cs_panel_collapsed') === 'true') {
+    const panel = document.getElementById('chat-panel');
+    const btn = document.getElementById('toggle-btn');
+    if (panel) panel.classList.add('collapsed');
+    if (btn) btn.textContent = '›';
+  }
+  const list = getChatList();
+  if (list.length > 0) {
+    loadChat(list[0].id);
+  } else {
+    newChat();
+  }
+}
+
 function fetchAINews(topic) {
   const queries = {
     'BTC ETH BNB': `📰 Розкажи про останні тренди та важливі події пов'язані з Bitcoin, Ethereum та BNB. Що зараз відбувається на ринку? Також порадь де знайти найсвіжіші новини онлайн.`,
@@ -1292,6 +1601,7 @@ async function sendMessage() {
 
   addMessage('user', text);
   conversationHistory.push({ role: 'user', content: text });
+  saveChatMessage('user', text);
 
   isLoading = true;
   document.getElementById('sendBtn').disabled = true;
@@ -1347,6 +1657,7 @@ async function sendMessage() {
     if (cursor) cursor.remove();
     textDiv.innerHTML = formatMessage(fullText);
     conversationHistory.push({ role: 'assistant', content: fullText });
+    saveChatMessage('assistant', fullText);
     updateXP(10);
 
   } catch (err) {
@@ -1604,10 +1915,30 @@ function setLang(lang) {
   // Refresh live data with new language
   fetchFearGreed();
   fetchBTCDominance();
-  fetchStatsPanel();
+  // Only refetch stats if no data yet, otherwise just update language-dependent text
+  const mcapEl = document.getElementById('stat-mcap');
+  if (!mcapEl || mcapEl.textContent === '$—') {
+    fetchStatsPanel();
+  } else {
+    // Just update the 24h change label language
+    const chgEl = document.getElementById('stat-mcap-chg');
+    if (chgEl) {
+      const txt = chgEl.textContent;
+      chgEl.textContent = txt.replace('24г', '24h').replace('24h', lang==='en'?'24h':'24г');
+    }
+  }
 
   // Clear history so AI starts fresh in new language
   conversationHistory = [];
+  saveCurrentChat();
+
+  // Translate chat panel
+  const panelLabel = document.querySelector('.chat-panel-label');
+  if (panelLabel) panelLabel.textContent = lang === 'en' ? 'Chats' : 'Чати';
+  const newChatBtn = document.querySelector('.new-chat-btn');
+  if (newChatBtn) newChatBtn.innerHTML = lang === 'en' ? '✏️ New Chat' : '✏️ Новий чат';
+  const panelFooter = document.getElementById('chat-panel-footer');
+  if (panelFooter) panelFooter.textContent = lang === 'en' ? 'Chats stored locally' : 'Чати зберігаються локально';
 
   // Refresh news with correct date locale
   fetchNews();
@@ -2130,6 +2461,9 @@ fetchFearGreed();
 fetchBTCDominance();
 setInterval(fetchFearGreed, 60000);
 setInterval(fetchBTCDominance, 60000);
+
+// Load saved chat on startup
+setTimeout(loadSavedChat, 500);
 
 // ── Crypto Oracle ──
 const oracleMoods = {
